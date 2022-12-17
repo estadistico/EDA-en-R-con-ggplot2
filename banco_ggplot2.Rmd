@@ -1,0 +1,499 @@
+---
+title: "banco_tarea"
+author: "chile"
+date: '2022-09-03'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r }
+banco <- read.csv("~/Tarea_R/banco.csv")
+```
+
+## 1. Introducción
+
+La dinamica de los datos es muy diferente en cualquier organazicion o empresa, en este sentido, se cuenta con datos que no estan apto para realizar de manera directa un analisis estadistico donde se debe cumplir con cierta estructura.
+
+Ahora, en esto caso donde los datos estan en Estado bruto, sin estructura para ser analizado de manera directa es donde participa el famoso "preprocesamiento" radicando su importancia en que su onbjetivo es tomar los datos bruto y llevarlo a una estructura donde se le pueda aplicar a algun analisis.
+
+Asi que el preprocesamiento es una etapa importante para garantizar la calidad del analisis.
+
+En el caso del analisis exploratorio de los datos consiste en realizar un estudio previo, para conocer la realidad del problema, asi se conoce la magnitud de los datos, su distribucion, su medidas de resumen entre otros que van a permitir toimar la desicion de cual es la tecnica de inferencia mas adecuada luego de obtener un analisis exploratorio del mismo.
+
+Entonces la importancia del analisis exploratorio radica en conocer la distribucion y los estadistico de los datos previo a aplicar una tecnica de inferencia, siendo el analisis exploratorio un paso previo para aplicar alguna tecnica inferencial o de pronostico.
+
+
+> Objetivo
+
+ -  Analizar y explorar el comportamiento de consumo en el sector bancario
+
+
+> Descripcion de los datos
+
+Se tiene las siguientes variables
+
+```{r}
+names(banco)
+```
+
+Se tienen unas 14 variables
+
+```{r}
+
+length(names(banco))
+
+
+```
+
+Se tiene que la cantidad de observaciones es de 5000
+
+```{r}
+nrow(banco)
+```
+
+La base de datos se trata del sector bancario, especificamente Clientes de una entidad Bancaria donde se registraron datos de consumo (gasto de tarjeta, online) como datos personales (Hipotecas, edad)
+
+## Tipo de variable
+
+```{r}
+str(banco)
+```
+Todas las variables son numericas o enteras,
+
+"edad", "ingreso" ,"gasto_tarjeta","experiencia","hipoteca"
+
+
+Variable categorica:
+
+"ZIP_cod","educacion"      "valores"       "certificado"   "Online"        "CreditCard" , "prestamo", "familia",   
+
+
+> Categorizacion de las variables
+
+```{r}
+
+banco$Online=factor(banco$Online,levels=c(0,1),labels = c("No","Si"))
+banco$familia=factor(banco$familia)
+banco$CreditCard=factor(banco$CreditCard,levels=c(0,1),labels = c("No","Si"))
+banco$valores=factor(banco$valores,levels=c(0,1),labels = c("No","Si"))
+banco$prestamo=factor(banco$prestamo,levels=c(0,1),labels = c("No","Si"))
+banco$certificado=factor(banco$certificado,levels=c(0,1),labels = c("No","Si"))
+banco$educacion=factor(banco$educacion)
+
+```
+
+
+> Grafico para las variables categoricas
+
+```{r message=FALSE,warning=FALSE}
+library(ggplot2)
+ggplot(banco) +
+ aes(x = prestamo) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Prestamo") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = familia) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Familia") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = educacion) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Educacion") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = valores) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Valores") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = certificado) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Certificado") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = Online) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Online") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = CreditCard) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de CreditCard") +
+ theme_minimal()
+```
+
+Se realiza un grafico de barras con las variables categorica
+
+## 2.1 - Resumen de medidas estadísticas (en una tabla), e interpretación. 
+
+```{r message=FALSE,warning=FALSE}
+
+library(dplyr)
+banco_numeric<-banco %>% select_if(is.numeric)
+banco_numeric<-select(banco_numeric,-ID,-ZIP_cod)
+
+
+aux1<-banco_numeric %>% summarise_all(.funs = list(media = mean, mediana = median,minimo=min,maximo=max,desvi=sd)) %>% t
+aux2<-banco_numeric %>% summarise_all(.funs = list(media = mean)) %>% t
+aux3<-banco_numeric %>% summarise_all(.funs = list(desvi=sd)) %>% t
+aux4<-as.data.frame((aux3/aux2))
+
+aux1<-as.data.frame(aux1)
+rownames( aux4 )<-c("edad_cv","experiencia_cv","ingreso_cv","gasto_tarjeta_cv","hipoteca_cv")
+tabla1<-rbind(aux1,aux4)
+colnames(tabla1)<-"Valor"
+tabla1
+```
+
+
+## 2.2- Análisis de una variable tipo entera o categórica, representación gráfica de la frecuencia de cada categoría. 
+
+>  tabla
+
+
+```{r}
+library(janitor)
+
+t2 <- banco %>%
+  tabyl(prestamo)
+t2
+```
+
+
+
+> grafico
+
+```{r}
+ggplot(banco) +
+ aes(x = prestamo) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Prestamo") +
+ theme_minimal()
+
+```
+
+## 2.3- Análisis de una variable tipo numérica (tabla de frecuencias, histograma de frecuencias y curva de densidad) y análisis de normalidad (Q-Q plot y prueba de normalidad) 
+
+> gasto de tarjeta
+
+
+> Tabla de frecuencia
+
+```{r}
+library(fdth)
+fdt(banco$gasto_tarjeta)
+
+```
+
+> Histograma
+
+
+```{r}
+ggplot(banco_numeric) +
+  aes(x = gasto_tarjeta) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  labs(
+    x = "Gasto tarjeta",
+    y = "Cantidad",
+    title = "Histograma de gasto de tarjeta"
+  ) +
+  theme_light()
+```
+
+> Densidad
+
+```{r}
+
+ggplot(banco_numeric) +
+  aes(x = gasto_tarjeta) +
+  geom_density(adjust = 1L, fill = "#112446") +
+  labs(
+    x = "Gasto tarjeta",
+    y = "Densidad",
+    title = "Gasto de tarjeta: Densidad"
+  ) +
+  theme_minimal()
+```
+
+
+> QQ plot
+
+```{r}
+qqnorm(banco$gasto_tarjeta)
+qqline(banco$gasto_tarjeta, col="blue")
+```
+No se distribuye normal el gasto de la tarjeta se observa que la curva no se ajusta a los datos.
+
+
+
+
+> Prueba de normalidad
+
+$H_0$=normalidad
+
+$H_1$=No hay normalidad
+
+
+```{r}
+shapiro.test(banco$gasto_tarjeta)
+```
+
+Como el p valor es menor a 0,05 se rechaza la hipotesis nula por lo tanto no existe normalidad en el gasto de la tarjeta
+
+
+2.4- Identificación de valores atípicos (boxplot variable numérica (2.3), boxplot relación variable numérica (2.3) con variable entera o categórica (2.2) 
+
+```{r}
+
+ggplot(banco) +
+ aes(x = prestamo, y = gasto_tarjeta) +
+ geom_boxplot(fill = "#112446") +
+ labs(title = "Gasto tarjeta vs Prestamo", 
+ subtitle = "Grafico de caja y bigote") +
+ theme_minimal()
+
+```
+
+
+
+2.5- Detección de datos faltantes 
+
+```{r}
+
+
+apply(apply(banco, 2, is.na), 2,sum) 
+
+```
+
+No existe datos faltante en ninguna de las variables
+
+
+2.6- Análisis de correlación, representación de matriz de correlación.
+
+```{r}
+mcorre<-cor(banco_numeric)
+mcorre
+```
+Ahora se realiza visualmente
+
+
+```{r}
+library(corrplot)
+
+corrplot(mcorre, method = "number")
+
+```
+
+Experiencia y edad estan altamente correlacionada, minetras que intgreso y gasto estan correlacionado en un 65%
+
+3. Conclusiones 
+
+Se tiene que el analsisi exploratorio de los datos es un paso previo importante para conocer nuestro datos, su distribucion y poder tomar la desiciones necesario para un analisis inferencial que pronostique de manera lo mas acertada posible, en este contexto el analisis exploratorio de los datos inicia con la descripcion de loa datos y con los grafico de las variables categorica donde la variable Online es el grafico de barra se observa que el Si es mayoritario.
+
+en las variables prestamo, CreditCard, certificado y  valores el mayoritario es la opcion No.
+
+Ahora se tiene que Online es una variable que toma importancia en la ultima epoca y es de resaltar su seguimiento.
+
+Donde existe mayor variabilidad es en la hipoteca con un coeficiente de variacion de 180%, donde existe menos variacion es en edad con el 25%.
+
+Otra variable de interes para el estudio es gasto de la tarjeta donde se observa En la densidad e histograma que tiene una distribicion con asimetria positiva, 
+
+La correlacion entre Experiencia y años es del 99% siendo variables muy altamente correlacionada y pueden ocasionar problemas de multicolinealidad en algun futuro modelo
+
+
+4. Referencias bibliográficas (APA)
+
+Leandro, G. T. (2018). Análisis exploratoria de datos: Una introducción a la estadística descriptiva y probabilidad. Editorial Tadeo Lozano.
+
+
+
+5.  Anexos: todos los códigos utilizados.
+
+```{r message=FALSE,warning=FALSE, eval=FALSE}
+#knitr::purl("banco_tarea.Rmd")
+banco <- read.csv("~/Tarea_R/banco.csv")
+
+names(banco)
+
+
+length(names(banco))
+
+nrow(banco)
+
+str(banco)
+
+banco$Online=factor(banco$Online,levels=c(0,1),labels = c("No","Si"))
+banco$familia=factor(banco$familia)
+banco$CreditCard=factor(banco$CreditCard,levels=c(0,1),labels = c("No","Si"))
+banco$valores=factor(banco$valores,levels=c(0,1),labels = c("No","Si"))
+banco$prestamo=factor(banco$prestamo,levels=c(0,1),labels = c("No","Si"))
+banco$certificado=factor(banco$certificado,levels=c(0,1),labels = c("No","Si"))
+banco$educacion=factor(banco$educacion)
+
+
+
+## ----message=FALSE,warning=FALSE----------------------------------------------------------------------------------
+library(ggplot2)
+ggplot(banco) +
+ aes(x = prestamo) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Prestamo") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = familia) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Familia") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = educacion) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Educacion") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = valores) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Valores") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = certificado) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Certificado") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = Online) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Online") +
+ theme_minimal()
+
+ggplot(banco) +
+ aes(x = CreditCard) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de CreditCard") +
+ theme_minimal()
+
+
+## ----message=FALSE,warning=FALSE----------------------------------------------------------------------------------
+
+library(dplyr)
+banco_numeric<-banco %>% select_if(is.numeric)
+banco_numeric<-select(banco_numeric,-ID,-ZIP_cod)
+
+
+aux1<-banco_numeric %>% summarise_all(.funs = list(media = mean, mediana = median,minimo=min,maximo=max,desvi=sd)) %>% t
+aux2<-banco_numeric %>% summarise_all(.funs = list(media = mean)) %>% t
+aux3<-banco_numeric %>% summarise_all(.funs = list(desvi=sd)) %>% t
+aux4<-as.data.frame((aux3/aux2))
+
+aux1<-as.data.frame(aux1)
+rownames( aux4 )<-c("edad_cv","experiencia_cv","ingreso_cv","gasto_tarjeta_cv","hipoteca_cv")
+tabla1<-rbind(aux1,aux4)
+colnames(tabla1)<-"Valor"
+tabla1
+
+
+## -----------------------------------------------------------------------------------------------------------------
+library(janitor)
+
+t2 <- banco %>%
+  tabyl(prestamo)
+t2
+
+
+## -----------------------------------------------------------------------------------------------------------------
+ggplot(banco) +
+ aes(x = prestamo) +
+ geom_bar(fill = "#112446") +
+ labs(title = "Grafico de Prestamo") +
+ theme_minimal()
+
+
+
+## -----------------------------------------------------------------------------------------------------------------
+library(fdth)
+fdt(banco$gasto_tarjeta)
+
+
+
+## -----------------------------------------------------------------------------------------------------------------
+ggplot(banco_numeric) +
+  aes(x = gasto_tarjeta) +
+  geom_histogram(bins = 30L, fill = "#112446") +
+  labs(
+    x = "Gasto tarjeta",
+    y = "Cantidad",
+    title = "Histograma de gasto de tarjeta"
+  ) +
+  theme_light()
+
+
+## -----------------------------------------------------------------------------------------------------------------
+
+ggplot(banco_numeric) +
+  aes(x = gasto_tarjeta) +
+  geom_density(adjust = 1L, fill = "#112446") +
+  labs(
+    x = "Gasto tarjeta",
+    y = "Densidad",
+    title = "Gasto de tarjeta: Densidad"
+  ) +
+  theme_minimal()
+
+
+## -----------------------------------------------------------------------------------------------------------------
+qqnorm(banco$gasto_tarjeta)
+qqline(banco$gasto_tarjeta, col="blue")
+
+
+## -----------------------------------------------------------------------------------------------------------------
+shapiro.test(banco$gasto_tarjeta)
+
+
+## -----------------------------------------------------------------------------------------------------------------
+ggplot(banco) +
+ aes(x = prestamo, y = gasto_tarjeta) +
+ geom_boxplot(fill = "#112446") +
+ labs(title = "Gasto tarjeta vs Prestamo", 
+ subtitle = "Grafico de caja y bigote") +
+ theme_minimal()
+
+
+
+## -----------------------------------------------------------------------------------------------------------------
+
+
+apply(apply(banco, 2, is.na), 2,sum) 
+
+
+
+## -----------------------------------------------------------------------------------------------------------------
+mcorre<-cor(banco_numeric)
+mcorre
+
+
+## -----------------------------------------------------------------------------------------------------------------
+library(corrplot)
+
+corrplot(mcorre, method = "number")
+
+
+
+```
+
